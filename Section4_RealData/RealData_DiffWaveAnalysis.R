@@ -1,7 +1,7 @@
 # Difference wave analysis of real preschooler ERP data
 
 # This script was used to analyze the NC difference wave mean amplitudes presented 
-# in Section 4 of Heise, Mon, and Bowman (submitted). The input files contained 
+# in Section 4 of Heise, Mon, and Bowman (submitted). The input files contain
 # NC mean amplitudes for two emotion conditions: 
 # Full-Intensity Angry and Reduced-Intensity Angry
 
@@ -98,7 +98,7 @@ source("setNSFunctions.R")
   #   has columns for mean amplitude and trial presentation number. 
 makeWide_realData = function(dfInput_long) { 
   # Create array of indices for each pair of trials (extract 1st row of each pair)
-  i = seq(1, nrow(dfInput_long) - 1, by = 2)
+  i <- seq(1, nrow(dfInput_long) - 1, by = 2)
   
   # For each 2nd row of each trial pair (corresponding to the second condition),
   # we extract mean amplitude and presentation number information and save as new columns
@@ -289,14 +289,14 @@ showConnections()
 
 # Specify number of random permutation iterations
 iterN <- 10000
-origFuns = setNSFunctions()
+origFuns <- setNSFunctions()
 
 # Prepare dataframe for more efficient permutation by extracting number of trials per condition
 # for each participant
-dfTrial_order = dfTrial[order(dfTrial$SUBJECTID, dfTrial$electrode, dfTrial$emotion), ] # Order rows from participant 1-n; and within each participant: order trials first by electrode, then by condition 
-subjectEmotionNTable = table(dfTrial$SUBJECTID, dfTrial$emotion) # Count number of trials for each participant and condition (note this is a multiple of 3 due to 3 electrodes)
-subjectEmotionNTable = subjectEmotionNTable[,c(1:2)] # Subset first two columns for subsequent processing
-LME_output_RP_allIter = vector("list", iterN)  # Temporary variable for storing output for each random perm iteration
+dfTrial_order <- dfTrial[order(dfTrial$SUBJECTID, dfTrial$electrode, dfTrial$emotion), ] # Order rows from participant 1-n; and within each participant: order trials first by electrode, then by condition 
+subjectEmotionNTable <- table(dfTrial$SUBJECTID, dfTrial$emotion) # Count number of trials for each participant and condition (note this is a multiple of 3 due to 3 electrodes)
+subjectEmotionNTable <- subjectEmotionNTable[,c(1:2)] # Subset first two columns for subsequent processing
+LME_output_RP_allIter <- vector("list", iterN)  # Temporary variable for storing output for each random perm iteration
 
 # Specify Random Permutation model formula where predictor of interest is ECBQ_per 
 # (same as Nearest Neighbor model formula)
