@@ -1,4 +1,4 @@
-# Difference wave analysis of real preschooler ERP data
+# Difference Wave Analysis of Real Preschooler ERP Data
 
 # This script was used to analyze the NC difference wave mean amplitudes presented 
 # in Section 4 of Heise, Mon, and Bowman (submitted). The input files contain
@@ -20,7 +20,7 @@
   # - Needs R Version 3.6.1 and packages listed below
   # - Input files containing trial-level and condition-level NC mean amplitudes
   #   (see comments below)
-  # - setNSFunctions is saved in the same working directory 
+  # - setNSFunctions.R is saved in the same working directory
 
 # Script Functions:
   # 1. Define function for trial-level analysis 
@@ -62,18 +62,18 @@
 
 # Load required packages
 library(dplyr) # V.1.0.2; dataframe manipulation
-library(car) # V.3.01-0; ontr.sum function 
+library(car) # V.3.01-0; contr.sum function 
 library(rstatix) # V.0.6.0; regression assumption checks
 library(tidyverse) # V.1.3.0; group_by function 
-library(lme4) # V.1.1-25; lme models
-library(lmerTest) # V.3.1-3; p-values for lme
+library(lme4) # V.1.1-25; LME models
+library(lmerTest) # V.3.1-3; p-values for LME
 library(MatchIt) # V.4.1.0; nearest neighbor trial pairing 
 library(tidyr) # V.1.1.2; spread function
 library(emmeans) # V.1.5.3; estimated marginal means calculation
 library(performance) # V.0.6.1; check_convergence function
 library(coxed) # V.0.3.3; bootstrapped CI calculation
 library(foreach) # V.1.5.2; foreach function
-library(doParallel) # V.1.0.17; %dopar%
+library(doParallel) # V.1.0.17; %dopar% operator
 library(doRNG) # V.1.8.3; reproducible parallel results
 RNGkind("L'Ecuyer-CMRG") 
 
@@ -81,14 +81,14 @@ RNGkind("L'Ecuyer-CMRG")
 # 1. DEFINE FUNCTION FOR TRIAL-LEVEL ANALYSIS
 
 # Load functions used for faster random permutation processing (same file used for
-# simulation code)
+# simulations)
 source("setNSFunctions.R")
 
 # makeWide_realData: Function adapted from LME simulation code to convert long dataframe 
 # into wide to facilitate trial-level difference wave calculations. We changed 'A' labels to
 # 'FullAngry' and 'B' labels to 'ReduAngry'.
 # - Format:
-#     dfOutput_wide <- makeWide_realData(dfInput_long)
+  #   dfOutput_wide <- makeWide_realData(dfInput_long)
 # - Input: 
   # - dfInput_long: Trial-level dataframe in which rows have been sorted based on trial pairing ID
   #   and condition (e.g., row 1 is trial pair 1/Full Angry, row 2 is trial pair 1/Redu Angry,
@@ -101,8 +101,8 @@ makeWide_realData = function(dfInput_long) {
   i <- seq(1, nrow(dfInput_long) - 1, by = 2)
   
   # For each 2nd row of each trial pair (corresponding to the second condition),
-  # we extract mean amplitude and presentation number information and save as new columns
-  # in the 1st row of each pair 
+  # we extract mean amplitude and trial presentation number information and save 
+  # as new columns in the 1st row of each pair 
   dfInput_long[i, c("meanAmpNC.ReduAngry", "presentNumber.ReduAngry")] = dfInput_long[i+1, c("meanAmpNC", "presentNumber")]
   
   # Rename the original meanAmpNC and presentNumber columns to reflect the first condition 
@@ -118,12 +118,12 @@ makeWide_realData = function(dfInput_long) {
 # 2. LOAD DATA FILES 
 
 # Data files are in long format:
-# - For the trial-level data, each row corresponds to one participant, one electrode,
-#   one trial presentation, and one condition.
-# - For the condition-level data, each row corresponds to one participant and one 
-#   condition (data has been averaged across electrode and trial presentations).
-# Full-Intensity Angry is labelled as FullAngry and Reduced-Intensity Angry is
-# labelled as ReduAngry.
+  # - For the trial-level data, each row corresponds to one participant, one electrode,
+  #   one trial presentation, and one condition.
+  # - For the condition-level data, each row corresponds to one participant and one 
+  #   condition (data has been averaged across electrode and trial presentations).
+  # - Full-Intensity Angry is labelled as FullAngry and Reduced-Intensity Angry is
+  #   labelled as ReduAngry.
 
 setwd('C:/Users/basclab/Desktop/Section4_RealData')
 dfTrial <- read.csv('nc_mAmp_trialLevel.csv')
@@ -137,7 +137,7 @@ dfCond_15TrialMin <- read.csv(nc_mAmp_condLevel_15TrialMin.csv)
 dfTrial$SUBJECTID <- as.factor(dfTrial$SUBJECTID) 
 dfTrial$ACTOR <- as.factor(dfTrial$ACTOR)
 
-# Sum-code emotion column and specify factor ordering of FullAngry before ReduAngry 
+# Sum code emotion column and specify factor ordering of FullAngry before ReduAngry 
 # for subsequent processing with makeWide_realData function 
 dfTrial$emotion <- factor(dfTrial$emotion, levels = c("FullAngry", "ReduAngry"))
 contrasts(dfTrial$emotion)=contr.Sum(levels(dfTrial$emotion))
@@ -145,8 +145,8 @@ contrasts(dfTrial$emotion)=contr.Sum(levels(dfTrial$emotion))
 # Set Cz as the reference level for Interaction model analysis
 dfTrial$electrode <- factor(dfTrial$electrode, levels = c("Cz","C3","C4"))
 
-# Create column of 0's and 1's where FullAngry is set as treatment (1) for
-# matchit function (Nearest Neighbor approaches)
+# Create column of 0's and 1's where FullAngry is set as the 'treatment' group
+# (1) for matchit function (Nearest Neighbor approaches)
 dfTrial$emotionBinary <- ifelse(dfTrial$emotion == "FullAngry", 1, 0)
 
 #-------------------------------------------------------------------------------
@@ -193,8 +193,8 @@ qqmath(LME_EM)
 # 6. FIT LME NEAREST NEIGHBOR: NO PRIORITIZATION MODEL 
 # This Nearest Neighbor model is abbreviated as NN_N
 
-# Identify trial pairs have an exact match based on SUBJECTID and electrode and a 
-# greedy match based on presentation number and actor 
+# Identify trial pairs that have an exact match based on SUBJECTID and electrode  
+# and a greedy match based on trial presentation number and actor 
 matchOutput_NN_N <- matchit(emotionBinary ~ presentNumber + ACTOR, data = dfTrial,
                             method = "nearest", distance = "mahalanobis", exact = c("SUBJECTID", "electrode"))
 # Extract data with paired trials only (i.e., exclude unmatched trials)
@@ -204,13 +204,13 @@ dfTrial_NN_N <- match.data(matchOutput_NN_N)
 # - Note that we don't need to sort based on SUBJECTID and electrode because that has
 # already been taken into account by the trial pairing ID.
 dfTrial_NN_N <- dfTrial_NN_N[order(dfTrial_NN_N$subclass, dfTrial_NN_N$emotion),]
-# Make dataframe wide so we can calculate mean amp difference in next line
+# Make dataframe wide so we can calculate trial-level difference waves
 dfTrial_NN_N <- makeWide_realData(dfTrial_NN_N) 
 
-# Calculate mean amplitude difference between trial pairs
+# Calculate trial-level difference wave mean amplitudes
 dfTrial_NN_N$diffWaveMeanAmpNC <- dfTrial_NN_N$meanAmpNC.FullAngry - dfTrial_NN_N$meanAmpNC.ReduAngry
 
-# Calculate average presentation number for each trial pair
+# Calculate average trial presentation number for each trial pair
 dfTrial_NN_N$presentNumberAvg <- (dfTrial_NN_N$presentNumber.FullAngry + dfTrial_NN_N$presentNumber.ReduAngry)/2
 
 # Specify Nearest Neighbor model formula where predictor of interest is ECBQ_per
@@ -230,7 +230,7 @@ qqmath(LME_NN_N)
 # This Nearest Neighbor model is abbreviated as NN_P
 
 # Identify trial pairs that have an exact match based on SUBJECTID, electrode, and
-# presentation number and a greedy match based on actor 
+# trial presentation number and a greedy match based on actor 
 matchOutput_NN_P <- matchit(emotionBinary ~ ACTOR, data = dfTrial,
                             method = "nearest", distance = "mahalanobis", exact = c("SUBJECTID", "electrode", "presentNumber"))
 # Repeat same process of extracting trial-paired data and calculating difference wave 
@@ -256,7 +256,7 @@ qqmath(LME_NN_P)
 # This Nearest Neighbor model is abbreviated as NN_F
 
 # Identify trial pairs that have an exact match based on SUBJECTID, electrode, and
-# actor (stimulus feature) and a greedy match based on presentation number
+# actor (stimulus feature) and a greedy match based on trial presentation number
 matchOutput_NN_F <- matchit(emotionBinary ~ presentNumber, data = dfTrial,
                             method = "nearest", distance = "mahalanobis", exact = c("SUBJECTID", "electrode", "ACTOR"))
 # Repeat same process of extracting trial-paired data and calculating difference wave 
@@ -279,7 +279,7 @@ qqmath(LME_NN_F)
 
 #-------------------------------------------------------------------------------
 # 9. FIT LME RANDOM PERMUTATION MODEL
-# Note: We randomly pair trials WITHIN SUBJECTID and electrode
+# Note: We randomly pair trials within SUBJECTID and electrode
 
 # Set up parallel processing for Random Permutation model
 numCore <- 7
@@ -289,51 +289,56 @@ showConnections()
 
 # Specify number of random permutation iterations
 iterN <- 10000
+# Load functions used to speed up model fitting
 origFuns <- setNSFunctions()
 
-# Prepare dataframe for more efficient permutation by extracting number of trials per condition
-# for each participant
-dfTrial_order <- dfTrial[order(dfTrial$SUBJECTID, dfTrial$electrode, dfTrial$emotion), ] # Order rows from participant 1-n; and within each participant: order trials first by electrode, then by condition 
-subjectEmotionNTable <- table(dfTrial$SUBJECTID, dfTrial$emotion) # Count number of trials for each participant and condition (note this is a multiple of 3 due to 3 electrodes)
-subjectEmotionNTable <- subjectEmotionNTable[,c(1:2)] # Subset first two columns for subsequent processing
-LME_output_RP_allIter <- vector("list", iterN)  # Temporary variable for storing output for each random perm iteration
+# Order rows from participant 1-n; and within each participant: order trials first by electrode, then by condition 
+dfTrial_order <- dfTrial[order(dfTrial$SUBJECTID, dfTrial$electrode, dfTrial$emotion),] 
+
+# Count number of trials for each participant and condition (note this is a multiple of 3 due to 3 electrodes)
+subjectEmotionNTable <- table(dfTrial$SUBJECTID, dfTrial$emotion) 
+# Subset first two columns for subsequent processing
+subjectEmotionNTable <- subjectEmotionNTable[,c(1:2)] 
+
+# Temporary variable for storing output for each random perm iteration
+LME_output_RP_allIter <- vector("list", iterN)  
 
 # Specify Random Permutation model formula where predictor of interest is ECBQ_per 
 # (same as Nearest Neighbor model formula)
 formulaLME_RP <- diffWaveMeanAmpNC ~ presentNumberAvg + ECBQ_per + (1|SUBJECTID)
 
 set.seed(20230317) # Set seed for reproducible results
-LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performance', 'emmeans', 'lme4', 'lmerTest', 'afex')) %dorng% { # Loop through each simulated data sample
-  # For each row of subjectEmotionNTable (corresponding to the number of trials per condition for each subject):
+LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performance', 'emmeans', 'lme4', 'lmerTest', 'afex')) %dorng% { # Loop through each random perm iteration
+  # For each row of subjectEmotionNTable (corresponding to the number of trials per condition for each participant):
   # 1) divide number of trials by 3 to get number of trials for one electrode
   # 2) randomly order integers 1-trialN_FullAngry; then randomly order integers 1-trialN_ReduAngry (no replacement);
   # 3) concatenate these two arrays into one array and then use unlist to save in one array;
   # 4) add this array as the subclass column in dfTrial_order
   # Note: The subclass pairing assumes that dfTrial_order has already been ordered based on participant, electrode, and condition! 
-  dfTrial_order$subclass <- unlist(apply(subjectEmotionNTable, 1, 
-                                            function(x) c(sample.int(x[1]/3), sample.int(x[2]/3), sample.int(x[1]/3), sample.int(x[2]/3), sample.int(x[1]/3), sample.int(x[2]/3))))
+  dfTrial_order$subclass <- unlist(apply(subjectEmotionNTable, 1,
+                                         function(x) c(sample.int(x[1]/3), sample.int(x[2]/3), sample.int(x[1]/3), sample.int(x[2]/3), sample.int(x[1]/3), sample.int(x[2]/3))))
   
-  # Order rows from participant 1-n; and within each participant: subclass 1-s; and within each subclass: condition FullAngry/ReduAngry
-  # (important because later we assume that each first row is FullAngry, each second row is ReduAngry)
+  # Order rows from participant 1-n; and within each participant: subclass 1-s; and within each subclass: condition FullAngry, ReduAngry
+  # (this is important for subsequent processing where we assume that each first row is FullAngry, each second row is ReduAngry)
   dfTrial_order <- dfTrial_order[order(dfTrial_order$SUBJECTID, dfTrial_order$electrode, dfTrial_order$subclass), ]
   
   # For each row of subjectEmotionNTable:
   # 1) identify the min number of trials across conditions 
-  # 2) select the first min number of trial pairs by assigning TRUE to the first 2*min number of trial
-  #    and assign FALSE to all remaining rows (i.e., unpaired rows)
+  # 2) select the first min number of trial pairs by assigning TRUE to the first 
+  #    2*min number of trial and assign FALSE to all remaining rows (i.e., unpaired rows)
   keepTrialPairs <- unlist(apply(subjectEmotionNTable, 1, 
-                                function(x){subjectEmotionN_min = min(x)/3; rep(rep(c(TRUE, FALSE), c(2*subjectEmotionN_min, (sum(x)/3) - 2*subjectEmotionN_min)), times = 3)}))
+                                 function(x){subjectEmotionN_min = min(x)/3; rep(rep(c(TRUE, FALSE), c(2*subjectEmotionN_min, (sum(x)/3) - 2*subjectEmotionN_min)), times = 3)}))
   
   # Select the rows that have a trial pair and discard all rows that do not
   dfTrial_RP <- dfTrial_order[keepTrialPairs, ]
   
-  # Make dataframe wide so we can calculate mean amp difference in next line
+  # Make dataframe wide 
   dfTrial_RP <- makeWide_realData(dfTrial_RP) 
   
-  # Calculate mean amp difference between trial pairs
+  # Calculate trial-level difference wave mean amplitudes
   dfTrial_RP$diffWaveMeanAmpNC <- dfTrial_RP$meanAmpNC.FullAngry - dfTrial_RP$meanAmpNC.ReduAngry
   
-  # Calculate average presentation number for each trial pair
+  # Calculate average trial presentation number for each trial pair
   dfTrial_RP$presentNumberAvg <- (dfTrial_RP$presentNumber.FullAngry + dfTrial_RP$presentNumber.ReduAngry)/2
   
   # Fit LME model
@@ -347,6 +352,7 @@ LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performan
                         mode = "satterthwaite", lmerTest.limit = 240000, adjust='sidak',
                         infer = c(TRUE, TRUE))
     
+    # Create dataframe with model predictors and other information 
     # Effect is from emtrends, coef is from summary() 
     LME_output_RP <- data.frame(ECBQ_perEffect = unname(summary(mLME_RP))[2],
                                 ECBQ_perCoef = unname(fixef(LME_RP)[3]),
@@ -355,7 +361,7 @@ LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performan
                                 cor_IntPN = cov2cor(vcov(LME_RP))[2,1],
                                 cor_IntECBQ = cov2cor(vcov(LME_RP))[3,1],
                                 cor_PNECBQ = cov2cor(vcov(LME_RP))[3,2],
-                                subjectIntercept_sd = data.frame(VarCorr(LME_RP))[1,5], # this is standard dev!
+                                subjectIntercept_sd = data.frame(VarCorr(LME_RP))[1,5],
                                 subjectIntercept_var = data.frame(VarCorr(LME_RP))[1,4],
                                 resid_sd = data.frame(VarCorr(LME_RP))[2,5], 
                                 resid_var = data.frame(VarCorr(LME_RP))[2,4],
@@ -363,7 +369,7 @@ LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performan
                                 subjectN = nrow(ranef(LME_RP)$SUBJECTID),
                                 notConvergeN = 0, singFitN = 0, iterN = i)
   }
-  # Check for model problems and update this iteration's output accordingly
+  # Check for model problems and return this iteration's output accordingly
   else if (!check_convergence(LME_RP)) {
     LME_output_RP <- data.frame(ECBQ_perEffect = NA,
                                 ECBQ_perCoef = NA,
@@ -410,7 +416,7 @@ LME_output_RP_allIterFinal <- LME_output_RP_allIterFinal[!is.na(LME_output_RP_al
 mean(LME_output_RP_allIterFinal$ECBQ_perEffect) # Examine mean of perceptual sensitivity 
 bca(LME_output_RP_allIterFinal$ECBQ_perEffect) # Examine if confidence intervals include 0
 
-# Reset functions modified for speeding up random permutation and close cluster
+# Reset functions modified for speeding up model fitting and close cluster
 resetNSFunctions(origFuns)
 stopCluster(clust)
 showConnections()
@@ -460,7 +466,7 @@ shapiro_test(residuals(reg_15TrialMin))
 
 # Use emtrends for all models so that confidence intervals are comparable 
 # - We pick ECBQ_per of 4 because this is the median
-# - We pick presentNumber of 5.5. because this is the median
+# - We pick presentNumber of 5.5 to be comparable to the simulations
 mLME_Int <- emtrends(LME_Int, pairwise ~ emotion, var = "ECBQ_per", 
                      at = list(ECBQ_per = 4, presentNumber = 5.5), 
                      mode = "satterthwaite", lmerTest.limit = 240000, adjust='sidak',
@@ -469,9 +475,6 @@ mLME_EM <- emtrends(LME_EM, ~ECBQ_per, var = "ECBQ_per",
                     at = list(ECBQ_per = 4, presentNumber = 5.5),
                     mode = "satterthwaite", lmerTest.limit = 240000, adjust='sidak',
                     infer = c(TRUE, TRUE))
-mLME_RP <- data.frame(estimate = mean(LME_output_RP_allIterFinal$ECBQ_perEffect),
-                      lower.CL = bca(LME_output_RP_allIterFinal$ECBQ_perEffect)[1],
-                      upper.CL = bca(LME_output_RP_allIterFinal$ECBQ_perEffect)[2])
 mLME_NN_N <- emtrends(LME_NN_N, ~ECBQ_per, var = "ECBQ_per", 
                       at = list(ECBQ_per = 4, presentNumberAvg = 5.5),
                       mode = "satterthwaite", lmerTest.limit = 240000, adjust='sidak',
@@ -484,6 +487,9 @@ mLME_NN_F <- emtrends(LME_NN_F, ~ECBQ_per, var = "ECBQ_per",
                        at = list(ECBQ_per = 4, presentNumberAvg = 5.5),
                        mode = "satterthwaite", lmerTest.limit = 240000, adjust='sidak',
                        infer = c(TRUE, TRUE))
+mLME_RP <- data.frame(estimate = mean(LME_output_RP_allIterFinal$ECBQ_perEffect),
+                      lower.CL = bca(LME_output_RP_allIterFinal$ECBQ_perEffect)[1],
+                      upper.CL = bca(LME_output_RP_allIterFinal$ECBQ_perEffect)[2])
 mReg_10TrialMin <- emtrends(reg_10TrialMin, ~ECBQ_per, var = "ECBQ_per",
                             at = list(ECBQ_per = 4),
                             adjust='sidak', infer = c(TRUE, TRUE))

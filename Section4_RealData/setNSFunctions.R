@@ -1,6 +1,10 @@
-# Functions created by Duncan T. Lang to modify three functions in the search path.
-# For more information, see: https://github.com/duncantl/MJSRandPerm/blob/main/README.md
+# Functions created by Duncan T. Lang to modify three functions in the search path
+# to reduce processing time when fitting analysis models. 
+# - For more information, see: https://github.com/duncantl/MJSRandPerm/blob/main/README.md
 
+# Function used prior to fitting analysis models 
+# - Format: 
+  #   origFuns <- setNSFunctions()
 setNSFunctions =
   function(funs = c(".get.outside.method", "stopifnot")) #, "[[.data.frame"))
   {
@@ -39,7 +43,9 @@ setNSFunctions =
     invisible(oldFuns)
   }
 
-
+# Function used to restore functions after fitting analysis models
+# - Format:
+  #   resetNSFunctions(origFuns)
 resetNSFunctions =
   function(prev)
   {
@@ -49,4 +55,3 @@ resetNSFunctions =
       lockBinding(var, x$ns)        
     },  names(prev), prev))
   }
-
