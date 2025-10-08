@@ -1,0 +1,1 @@
+This is a placeholder folder for the real infant EEG 'noise' files that can be downloaded from: https://osf.io/b53wj/ These files are combined with simulated ERP waveforms in the DiffWaveSim_02_SimulateERPData script. 
