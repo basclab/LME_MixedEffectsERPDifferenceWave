@@ -4,7 +4,7 @@
 # trials and subjects, and analyzes data using seven difference wave approaches:
   # - Six LME approaches: Interaction, Exact Match, three types of Nearest
   #   Neighbor, Random Permutation
-  # - One conventional ANOVA approach using a a common trial threshold (10 trials
+  # - One conventional ANOVA approach using a common trial threshold (10 trials
   #   per condition)
 
 # ***See Section3_SimulatedData README.md available on the LME_MixedEffectsERPDifferenceWave
@@ -25,12 +25,12 @@
   # 4. Fit difference wave approaches to population data (i.e., no missing data)
   # 5. Induce missing data
   # 6. Fit difference wave approaches after inducing missing data
-  # 7. Save model output across all samples
+  # 7. Save model output across all simulated datasets
 
 # Outputs: 
   # - One .csv file containing the estimated marginal means for each maternal 
   #   sensitivity group and other model predictors across all models and simulated
-  #   samples for one type of decay and missingness pattern (e.g., same decay/
+  #   datasets for one type of decay and missingness pattern (e.g., same decay/
   #   Missingness Pattern #1)
 
 # Copyright 2024 Megan J. Heise, Serena K. Mon, Lindsay C. Bowman
@@ -73,7 +73,7 @@ RNGkind("L'Ecuyer-CMRG")
 
 # Set up parallel processing to reduce processing time
 numCore <- 7
-clust < -makeCluster(numCore) 
+clust <- makeCluster(numCore) 
 registerDoParallel(clust)
 showConnections()
 
@@ -92,7 +92,6 @@ rpIter <- 10000 # Number of Random Permutation iterations for each sample
 saveFolder <- 'C:/Users/basclab/Desktop/Section3_SimulatedData/03_ModelOutput'
 missType <- 'Miss1' # Used for saveModelOutputName variable only
 decayRate <- 'different' # Used for saveModelOutputName variable only
-saveModelOutputName <- paste0('ModelOutput_', missType, '_', decayRate, 'Decay_sampleN', sampleN, '_subN', subjectN, '_rpIter', rpIter, '.csv')
 
 #-------------------------------------------------------------------------------
 # 1. SPECIFY MISSINGNESS PATTERN 
@@ -282,8 +281,8 @@ end_time <- Sys.time()
 end_time - start_time
 
 #-------------------------------------------------------------------------------
-# 7. SAVE MODEL OUTPUT ACROSS ALL SAMPLES
-
+# 7. SAVE MODEL OUTPUT ACROSS ALL SIMULATED DATASETS
+saveModelOutputName <- paste0(saveFolder, '/ModelOutput_', missType, '_', decayRate, 'Decay_sampleN', sampleN, '_subN', subjectN, '_rpIter', rpIter, '.csv')
 fwrite(modelOutputFinal, saveModelOutputName, row.names=FALSE)
 
 # Close parallel cluster
