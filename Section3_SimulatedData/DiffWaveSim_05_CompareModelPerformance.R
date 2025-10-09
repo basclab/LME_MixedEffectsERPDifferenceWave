@@ -67,25 +67,25 @@ decayRate <- 'different'
 sampleN <- 1000
 subjectN <- 48
 rpIter <- 10000 
-importFolder <- 'C:/Users/basclab/Desktop/Section3_SimulatedData/'
+importFolder <- 'C:/Users/basclab/Desktop/Section3_SimulatedData/03_ModelOutput/'
 importFilename <- paste0(importFolder, 'ModelOutput_', missType, '_', decayRate, 'Decay_sampleN', sampleN, '_subN', subjectN, '_rpIter', rpIter, '.csv')
 
 # Calculate population value of maternal sensitivity effect of interest at average 
 # presentation number simulated in data (this value is specific to the decay rate) 
 if (decayRate == 'same') {
-  mSensLow <- 1.997
-  mSensHigh <- -1.997
+  lowMSens <- 1.997
+  highMSens <- -1.997
   
 } else if (decayRate == 'different') {
-  mSensLow <- mean(seq(1.997, 1.997+(1.000*9), by = 1.000))
-  mSensHigh <- mean(seq(-1.997, -1.997+(1.000*9), by = 1.000))
+  lowMSens <- mean(seq(1.997, 1.997+(1.000*9), by = 1.000))
+  highMSens <- mean(seq(-1.997, -1.997+(1.000*9), by = 1.000))
 }
 
 #-------------------------------------------------------------------------------
 # 1. LOAD MODEL OUTPUT FILE
 
 # Load specified model output file for missingness pattern and decay rate
-modelOutput <- fread(filename) 
+modelOutput <- fread(importFilename) 
 
 # Create modelMatch column using modelType (e.g., LME) and matchMethod (e.g., Int) columns
 modelOutput$modelMatch <- paste0(modelOutput$modelType, '_', modelOutput$matchMethod)
@@ -110,7 +110,7 @@ modelOutput$subjectN[modelOutput$notConvergeN == 1 | modelOutput$singFitN == 1] 
 # Extract output for all models except for LME Random Permutation and calculate 
 # significant effect columns
 modelOutput_noRP <- modelOutput %>%
-  filter(!(modelMatch %in% c('Rand P', 'ANOVA:Int'))) %>%
+  filter(!(modelMatch %in% c('Rand P'))) %>%
   mutate(mSensPValue_sig = ifelse(mSensPValue <= 0.05, TRUE, FALSE),
          agePValue_sig = ifelse(agePValue <= 0.05, TRUE, FALSE),
          presentNumPValue_sig = ifelse(presentNumPValue <= 0.05, TRUE, FALSE))
@@ -185,9 +185,9 @@ modelOutput_final_modPr <- rbind(modelOutput_noRP_modPr, modelOutput_RP_modPr)
 
 # Count the number of iterations and samples that had non-convergence or singular fit
 modelProblemTable <- modelOutput_final_modPr %>% 
-  dplyr::group_by(caseDeletionPct, modelMatch) %>%
-  dplyr::summarize(notConvergeN_sum = sum(notConvergeN, na.rm = T),
-                   singFitN_sum = sum(singFitN, na.rm = T)) 
+  group_by(caseDeletionPct, modelMatch) %>%
+  summarise(notConvergeN_sum = sum(notConvergeN, na.rm = T),
+            singFitN_sum = sum(singFitN, na.rm = T)) 
 
 # Calculate the percent of model problems based on the total number of simulated samples
 # (for LME Random Permutation, the percent is based on the total number of iterations*samples)
@@ -201,8 +201,8 @@ modelProblemTable_final <- modelProblemTable %>%
 
 trialSubNTable <- modelOutput_final %>%
   group_by(modelMatch, caseDeletionPct) %>%
-  summarize(trialN_avg = round(mean(trialN, na.rm = T), 2),
-            trialN_sd = round(sd(trialN, na.rm = T),2),
+  summarise(trialNPerSub_avg = round(mean(trialN/subjectN, na.rm = T), 2),
+            trialNPerSub_sd = round(sd(trialN/subjectN, na.rm = T),2),
             subjectN_avg = round(mean(subjectN, na.rm = T),2),
             subjectN_sd = round(sd(subjectN, na.rm = T),2))
 
@@ -213,44 +213,44 @@ trialSubNTable <- modelOutput_final %>%
 # sensitivity effect divided by the total number of simulated datasets
 sigEffectTable <- modelOutput_final %>% 
   group_by(modelMatch, caseDeletionPct) %>%
-  summarize(sigMSens = round(sum(mSensPValue_sig, na.rm = T)/sampleN, 2),
+  summarise(sigMSens = round(sum(mSensPValue_sig, na.rm = T)/sampleN, 2),
             sigAge = round(sum(agePValue_sig, na.rm = T)/sampleN, 2),
             sigPNum = sum(presentNumPValue_sig, na.rm = T)/sampleN)
 
 #-------------------------------------------------------------------------------
 # 6. CALCULATE ERROR AND BIAS OF HIGH MATERNAL SENSITIVITY GROUP ESTIMATES
 
-# Calculate average and standard deviation of marginals means
-marginalMeansHighMSens <- modelOutput_final %>% 
+# Calculate average and standard deviation of marginal means
+highMSens_marginalMeans <- modelOutput_final %>% 
   group_by(modelMatch, caseDeletionPct) %>%
-  summarize(highMSensMean = mean(highMSensEMM, na.rm = TRUE), 
+  summarise(highMSensMean = mean(highMSensEMM, na.rm = TRUE), 
             highMSensStdDev = sd(highMSensEMM, na.rm = TRUE)) 
 
 # Calculate root mean squared error (RMSE) 
-highMSens_MSEsummary <- modelOutput_final %>%
-  mutate(highMSens_SE = (highMSensEMM-mSensHigh)^2) %>%
+highMSens_MSESummary <- modelOutput_final %>%
+  mutate(highMSens_SE = (highMSensEMM-highMSens)^2) %>%
   group_by(modelMatch, caseDeletionPct) %>%
-  summarize(RMSE = sqrt(mean(highMSens_SE, na.rm = TRUE))) %>%
+  summarise(RMSE = sqrt(mean(highMSens_SE, na.rm = TRUE))) %>%
   ungroup() %>%
   mutate(RMSERounded = round(RMSE, 2))
 
-# Calculate average relative bias = average percentage difference of the model’s 
+# Calculate average relative bias = average percentage difference of the model's 
 # marginal mean from the population value across simulated datasets
-highMSens_RelBiasSummary <- modelOutput_final %>%
-  mutate(highMSens_bias = highMSensEMM-mSensHigh,
-         highMSens_relBias = 100*(highMSens_bias/mSensHigh)) %>%
+highMSens_relBias <- modelOutput_final %>%
+  mutate(highMSens_bias = highMSensEMM-highMSens,
+         highMSens_relBias = 100*(highMSens_bias/highMSens))
+highMSens_relBiasSummary <- highMSens_relBias %>%
   group_by(modelMatch, caseDeletionPct) %>%
-  summarize(avgRelBias = mean(highMSens_relBias, na.rm = TRUE)) %>%
+  summarise(avgRelBias = mean(highMSens_relBias, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(avgRelBiasRounded = round(avgRelBias, 2))
 
 # Calculate paired t-test for relative bias values for three best LME models 
 # (Interaction, Exact Match, Random Permutation) versus ANOVA
-modelOutput_highMSens_forTTest <- modelOutput_final %>% 
+highMSens_relBias_forTTest <- highMSens_relBias %>% 
   filter(modelMatch %in% c('Interact', 'Exact M', 'Rand P', 'ANOVA')) %>% 
-  select(modelMatch, caseDeletionPct, sample, highMSens_relBias) %>%
-  mutate(modelMatch_factor = factor(modelMatch, levels = c('ANOVA', 'Interact', 'Exact M', 'Rand P')))
-pairedTTest_highMSens <- modelOutput_highMSens_forTTest %>%
+  select(modelMatch, caseDeletionPct, sample, highMSens_relBias)
+highMSens_pairedTTest <- highMSens_relBias_forTTest %>%
   group_by(caseDeletionPct) %>%
   pairwise_t_test(highMSens_relBias ~ modelMatch, paired = TRUE) %>%
   filter(group2 %in% c('ANOVA')) %>%
@@ -259,35 +259,35 @@ pairedTTest_highMSens <- modelOutput_highMSens_forTTest %>%
 #-------------------------------------------------------------------------------
 # 7. CALCULATE ERROR AND BIAS OF LOW MATERNAL SENSITIVITY GROUP ESTIMATES
 
-# Calculate average and standard deviation of marginals means
-marginalMeansLowMSens <- modelOutput_final %>% 
+# Calculate average and standard deviation of marginal means
+lowMSens_marginalMeans <- modelOutput_final %>% 
   group_by(modelMatch, caseDeletionPct) %>%
-  summarize(lowMSensMean = mean(lowMSensEMM, na.rm = TRUE), 
+  summarise(lowMSensMean = mean(lowMSensEMM, na.rm = TRUE), 
             lowMSensStdDev = sd(lowMSensEMM, na.rm = TRUE)) 
 
 # Calculate RMSE 
-lowMSens_MSEsummary <- modelOutput_final %>%
-  mutate(lowMSens_SE = (lowMSensEMM-mSensLow)^2) %>%
+lowMSens_MSESummary <- modelOutput_final %>%
+  mutate(lowMSens_SE = (lowMSensEMM-lowMSens)^2) %>%
   group_by(modelMatch, caseDeletionPct) %>%
-  summarize(RMSE = sqrt(mean(lowMSens_SE, na.rm = TRUE))) %>%
+  summarise(RMSE = sqrt(mean(lowMSens_SE, na.rm = TRUE))) %>%
   ungroup() %>%
   mutate(RMSERounded = round(RMSE, 2))
 
 # Calculate average relative bias 
-lowMSens_RelBiasSummary <- modelOutput_final %>%
-  mutate(lowMSens_bias = lowMSensEMM-mSensLow,
-         lowMSens_relBias = 100*(lowMSens_bias/mSensLow)) %>%
+lowMSens_relBias <- modelOutput_final %>%
+  mutate(lowMSens_bias = lowMSensEMM-lowMSens,
+         lowMSens_relBias = 100*(lowMSens_bias/lowMSens))
+lowMSens_relBiasSummary <- lowMSens_relBias %>%
   group_by(modelMatch, caseDeletionPct) %>%
-  summarize(avgRelBias = mean(lowMSens_relBias, na.rm = TRUE)) %>%
+  summarise(avgRelBias = mean(lowMSens_relBias, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(avgRelBiasRounded = round(avgRelBias, 2))
 
 # Calculate paired t-test for relative bias values
-modelOutput_lowMSens_forTTest <- modelOutput_final %>% 
+lowMSens_relBias_forTTest <- lowMSens_relBias %>% 
   filter(modelMatch %in% c('Interact', 'Exact M', 'Rand P', 'ANOVA')) %>% 
-  select(modelMatch, caseDeletionPct, sample, lowMSens_relBias) %>%
-  mutate(modelMatch_factor = factor(modelMatch, levels = c('ANOVA', 'Interact', 'Exact M', 'Rand P')))
-pairedTTest_lowMSens <- modelOutput_lowMSens_forTTest %>%
+  select(modelMatch, caseDeletionPct, sample, lowMSens_relBias)
+lowMSens_pairedTTest <- lowMSens_relBias_forTTest %>%
   group_by(caseDeletionPct) %>%
   pairwise_t_test(lowMSens_relBias ~ modelMatch, paired = TRUE) %>%
   filter(group2 %in% c('ANOVA')) %>%
@@ -296,16 +296,16 @@ pairedTTest_lowMSens <- modelOutput_lowMSens_forTTest %>%
 #-------------------------------------------------------------------------------
 # 8. VISUALIZE MARGINAL MEANS FOR EACH MATERNAL SENSITIVITY GROUP
 
-# In this example, we plot the marginal means for the low maternal sensitivity group
+# In this example, we plot the marginal means for the high maternal sensitivity group
 plotTitle <- 'A. Missingness Pattern #1: More Missing Data in Later Trials and in Younger Subjects'
-mSensLow_min <- -2.5 # Y-axis minimum
-mSensLow_max <- 18 # Y-axis maximum
-mSensLow_bias_min <- mSensLow-(0.1*mSensLow) # -10% bias
-mSensLow_bias_max <- mSensLow-(-0.1*mSensLow) # +10% bias
+highMSens_min <- -6.5 # Y-axis minimum
+highMSens_max <- 13 # Y-axis maximum
+highMSens_bias_min <- highMSens-(0.1*highMSens) # -10% bias
+highMSens_bias_max <- highMSens-(-0.1*highMSens) # +10% bias
 modelColors <- c('#e66101','#e66101','#e66101','#e66101','#e66101','#e66101', '#5e3c99')
 
 # Create tiff plotting device and location to save graph
-saveFilename <- paste0(importFolder, missType, '_', decayType, '_lowMSens.tiff')
+saveFilename <- paste0(importFolder, missType, '_', decayRate, '_highMSens.tiff')
 tiff(file = saveFilename,
      width = 13, 
      height = 5, 
@@ -313,16 +313,16 @@ tiff(file = saveFilename,
      res = 600) 
 
 # Create box plot of marginal means for each difference wave approach
-ggplot(modelOutput_graphFinal) +
+ggplot(modelOutput_final) +
   # Create gray shaded area for acceptable 10% bias
   annotate("rect", xmin= -Inf, xmax= Inf,
-           ymin=mSensLow_bias_min, ymax=mSensLow_bias_max,
+           ymin=highMSens_bias_min, ymax=highMSens_bias_max,
            fill="gray", alpha = 0.5) +
   # Plot marginal means (we plot for all LME Random Permutation iterations)
-  geom_boxplot(mapping = aes(x=modelMatch, y=lowMSensEMM, color=modelMatch),
+  geom_boxplot(mapping = aes(x=modelMatch, y=highMSensEMM, color=modelMatch),
                size = 0.8, outlier.alpha = 0.7, show.legend = FALSE) +
   # Plot dashed line indicating population value
-  geom_hline(yintercept = mSensLow, linetype = 2, size = 0.8, alpha = 0.3) +
+  geom_hline(yintercept = highMSens, linetype = 2, size = 0.8, alpha = 0.3) +
   facet_grid(cols = vars(caseDeletionPct), scales = "free_x") + theme_bw() +
   # Update plot with LME/ANOVA colors
   scale_color_manual("", values = modelColors) +
@@ -334,5 +334,5 @@ ggplot(modelOutput_graphFinal) +
   xlab('Model Type') +
   ylab(paste0('Marginal Means of Diff. Wave\n Mean Amp. (\u00B5V)')) +
   labs(title = plotTitle) +
-  scale_y_continuous(breaks=seq(-5,20,5), limits=c(mSensLow_min, mSensLow_max))
+  scale_y_continuous(breaks=seq(-5,20,5), limits=c(highMSens_min, highMSens_max))
 dev.off()
