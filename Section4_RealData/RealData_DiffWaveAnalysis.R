@@ -9,7 +9,7 @@
 # positively associated with greater differentiation between Full-Intensity and 
 # Reduced-Intensity Angry as measured through difference wave mean amplitudes?
 
-# We compare several difference wave analysis approaches:
+# We compared eight difference wave analysis approaches:
   # - Six LME approaches: Interaction, Exact Match, three types of Nearest
   #   Neighbor, Random Permutation
   # - Two conventional linear regression approaches using two common trial thresholds:
@@ -19,7 +19,7 @@
 # Requirements:
   # - Needs R Version 3.6.1 and packages listed below
   # - Input files containing trial-level and condition-level NC mean amplitudes
-  #   (see comments below)
+  #   saved in the same working directory (see Section 2 below)
   # - setNSFunctions.R is saved in the same working directory
 
 # Script Functions:
@@ -77,6 +77,10 @@ library(doParallel) # V.1.0.17; %dopar% operator
 library(doRNG) # V.1.8.3; reproducible parallel results
 RNGkind("L'Ecuyer-CMRG") 
 
+# Set working directory to folder containing setNSFunctions.R and 
+# input files
+setwd('C:/Users/basclab/Desktop/Section4_RealData')
+
 #-------------------------------------------------------------------------------
 # 1. DEFINE FUNCTION FOR TRIAL-LEVEL ANALYSIS
 
@@ -118,18 +122,18 @@ makeWide_realData = function(dfInput_long) {
 # 2. LOAD DATA FILES 
 
 # Data files are in long format:
-  # - For the trial-level data, each row corresponds to one participant, one electrode,
-  #   one condition, one actor, and one trial presentation.
-  # - For the condition-level data, each row corresponds to one participant and one 
-  #   condition (data has been averaged across electrodes, actors, and trial presentations).
+  # - For the trial-level data (dfTrial), each row corresponds to one participant, 
+  #   one electrode, one condition, one actor, and one trial presentation.
+  # - For the condition-level data (dfCond_10TrialMin, dfCond_15TrialMin), each row  
+  #   corresponds to one participant and one condition (data has been averaged across
+  #   electrodes, actors, and trial presentations).
   # - Full-Intensity Angry is labelled as FullAngry and Reduced-Intensity Angry is
   #   labelled as ReduAngry.
   # - See DataDictionary.xlsx for more information on variables.
 
-setwd('C:/Users/basclab/Desktop/Section4_RealData')
-dfTrial <- read.csv('nc_mAmp_trialLevel_example.csv')
-dfCond_10TrialMin <- read.csv('nc_mAmp_condLevel_10TrialMin_example.csv')
-dfCond_15TrialMin <- read.csv('nc_mAmp_condLevel_15TrialMin_example.csv')
+dfTrial <- read.csv('nc_mAmp_trialLevel.csv')
+dfCond_10TrialMin <- read.csv('nc_mAmp_condLevel_10TrialMin.csv')
+dfCond_15TrialMin <- read.csv('nc_mAmp_condLevel_15TrialMin.csv')
 
 #-------------------------------------------------------------------------------
 # 3. FORMAT TRIAL-LEVEL DATA FOR ANALYSIS
@@ -321,7 +325,7 @@ LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performan
   
   # Order rows from participant 1-n; and within each participant: subclass 1-s; and within each subclass: condition FullAngry, ReduAngry
   # (this is important for subsequent processing where we assume that each first row is FullAngry, each second row is ReduAngry)
-  dfTrial_order <- dfTrial_order[order(dfTrial_order$SUBJECTID, dfTrial_order$electrode, dfTrial_order$subclass), ]
+  dfTrial_orderFinal <- dfTrial_order[order(dfTrial_order$SUBJECTID, dfTrial_order$electrode, dfTrial_order$subclass), ]
   
   # For each row of subjectEmotionNTable:
   # 1) identify the min number of trials across conditions 
@@ -331,7 +335,7 @@ LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performan
                                  function(x){subjectEmotionN_min = min(x)/3; rep(rep(c(TRUE, FALSE), c(2*subjectEmotionN_min, (sum(x)/3) - 2*subjectEmotionN_min)), times = 3)}))
   
   # Select the rows that have a trial pair and discard all rows that do not
-  dfTrial_RP <- dfTrial_order[keepTrialPairs, ]
+  dfTrial_RP <- dfTrial_orderFinal[keepTrialPairs, ]
   
   # Make dataframe wide 
   dfTrial_RP <- makeWide_realData(dfTrial_RP) 
