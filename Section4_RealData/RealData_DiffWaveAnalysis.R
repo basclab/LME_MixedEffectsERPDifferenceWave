@@ -1,6 +1,6 @@
 # Difference Wave Analysis of Real Preschooler ERP Data
 
-# This script was used to analyze the Negative central (NC) difference wave mean 
+# This script was used to analyze the Negative Central (NC) difference wave mean 
 # amplitudes presented in Section 4 of Heise, Mon, and Bowman (2025). The input 
 # files contain NC mean amplitudes for two emotion conditions: 
 # Full-Intensity Angry and Reduced-Intensity Angry
