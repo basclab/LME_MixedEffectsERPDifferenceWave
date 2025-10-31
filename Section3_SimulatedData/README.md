@@ -1,4 +1,4 @@
-This folder contains pipeline scripts used to simulate realistic Negative central (NC) waveforms for Section 3 of Heise et al. (2025). We simulated two decay rate conditions: 'different decay' and 'same decay'. For each decay condition, we simulated a total of 1,000 datasets (samples). For each dataset, we simulated 48 subjects, and each simulated subject saw 100 trials (2 emotion conditions and 5 different ‘actors’ each presented 10 times per emotion condition). We include example output files for 2 datasets from the different decay rate condition.
+This folder contains pipeline scripts used to simulate realistic Negative Central (NC) waveforms for Section 3 of Heise et al. (2025). We simulated two decay rate conditions: 'different decay' and 'same decay'. For each decay condition, we simulated a total of 1,000 datasets (samples). For each dataset, we simulated 48 subjects, and each simulated subject saw 100 trials (2 emotion conditions and 5 different ‘actors’ each presented 10 times per emotion condition). We include example output files for 2 datasets from the different decay rate condition.
 
 ## Table of Contents  
 * [Script overview](#script-overview) 
@@ -8,7 +8,7 @@ This folder contains pipeline scripts used to simulate realistic Negative centra
 
 *MATLAB scripts for simulating trial-level ERP data*
 * **DiffWaveSim_01_CreateBinDescriptorFile.m**: Creates a bin descriptor file used to extract trial-level bins (i.e., each bin corresponds to a presentation of a specific condition/stimulus) in subsequent scripts (DiffWaveSim_02_SimulateERPData.m, simulateOneSubject_forDiffWave.m). 
-* **DiffWaveSim_02_SimulateERPData.m**: Simulates trial-level ERP data using two helper functions (simulateOneSample_forDiffWave.m, and simulateOneSubject_forDiffWave.m). Information about the simulation parameters are included in Appendix B of Heise et al. (2025).
+* **DiffWaveSim_02_SimulateERPData.m**: Simulates trial-level ERP data using two helper functions (simulateOneSample_forDiffWave.m, and simulateOneSubject_forDiffWave.m). More information about the simulation parameters are included in Appendix B of Heise et al. (2025).
 
 *R scripts for organizing data files and fitting LME and ANOVA models*
 * **DiffWaveSim_03_OrganizeDataFiles.R**: Prepares simulated data files for analysis by extracting trial and subject-related information.
