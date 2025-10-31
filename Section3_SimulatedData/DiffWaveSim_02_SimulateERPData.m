@@ -3,12 +3,12 @@
 % This script simulates trial-level ERP data for two emotion conditions
 % (condition A/Neutral and condition B/Happy) for subsequent analysis of 
 % Happy-minus-Neutral difference waves. Simulated subjects are assigned to
-% a low/high maternal sensitivity group and a younger/older age group. 
+% a Low/High maternal sensitivity group and a Younger/Older age group. 
 % Two helper functions are used: simulateOneSample_forDiffWave, simulateOneSubject_ForDiffWave
 
 % The number of simulated datasets (samples), subjects per sample, decay rate, 
 % random seed, lead field, electrode montage, electrodes of interest, dipole location
-% and orientation, and real noise files are specified in this current 
+% and orientation, and real infant noise files are specified in this current 
 % script. Other simulation parameters (e.g., number of simulated trials, 
 % mean amplitude for each emotion condition) are specified in the helper
 % functions. Missing data are not simulated until DiffWaveSim_04_ExtractModelOutput.R.
@@ -33,13 +33,13 @@
         %   to the MATLAB path (via "Home" > "Set Path" > "Add with Subfolders"). 
     % - Filepath to the following folders:
         % - saveFolder: Folder for saving simulated data output files.
-        %   This parent folder has two subfolders: 01_NCMeanAmpOutput_PreMerge
-        %   and 01_SubjectDataLog, which are used for saving the corresponding
-        %   mean amplitude output files and subject data logs (see Outputs
+        %   This parent folder has the following subfolders: 01_NCMeanAmpOutput_PreMerge,
+        %   01_SubjectDataLog, and (optional) 01_ERPFiles (see Outputs
         %   section below). 
-        % - noiseFolder: Folder containing the trial-level real noise
-        %   waveforms saved as .erp files. See Appendix A in Heise et al.
-        %   (submitted) for more information.
+        % - noiseFolder: Folder containing the trial-level real infant noise
+        %   waveforms saved as .erp files. To download these files, go to
+        %   https://osf.io/b53wj/ > "Files" > "InfantNoise" >
+        %   "ForNCSimulations".
     % - Variables used to specify data simulation parameters: sampleN,
     %   sampleStart, subjectN, decayRate, and other variables listed below.
     % - Requires parallel computing toolbox (if not available, set M = 1)
@@ -83,10 +83,8 @@
         % - mSens_age: String composed of a subject's assigned [maternal sensitivity group]_[age group]
         %   (e.g., lowMSens_youngerAgeGroup). 
     % - (Optional) .erp files containing the trial-level waveforms for all
-    %   subjects in a sample. There is one file for each simulated sample
-    %   and they are saved directly in the saveFolder specified above (not
-    %   in a subfolder). These files are useful for visualizing waveforms
-    %   or troubleshooting. 
+    %   subjects in a sample. There is one file for each simulated sample.
+    %   These files are useful for visualizing waveforms or troubleshooting. 
 
 % Copyright 2024 Megan J. Heise, Serena K. Mon, Lindsay C. Bowman
 % Brain and Social Cognition Lab, University of California Davis, Davis, CA, USA.
@@ -127,8 +125,8 @@ sampleN = 1000; % Number of simulated samples
 sampleStart = 1; 
 
 % Number of simulated subjects per sample. In this simulation, this variable is
-% divisible by 4 so that there are an equal number of subjects in the low/high
-% maternal sensitivity and the younger/older age groups (see simulateOneSample_forDiffWave
+% divisible by 4 so that there are an equal number of subjects in the Low/High
+% maternal sensitivity and the Younger/Older age groups (see simulateOneSample_forDiffWave
 % function for more information).
 subjectN = 48; 
 

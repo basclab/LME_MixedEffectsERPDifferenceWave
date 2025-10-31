@@ -3,7 +3,8 @@
 % This script creates a bin descriptor file used by
 % DiffWaveSim_02_SimulateERPData.m and the simulateOneSubject_forDiffWave 
 % function for ERPLAB processing. Trial-specific bins are created such that 
-% each bin corresponds to a presentation of a specific stimulus. 
+% each bin corresponds to a presentation of a specific stimulus (emotion
+% condition/actor).
 
 % In addition, a bin descriptor file 'key' is created, which documents each
 % bin's number, label, and corresponding event markers. Each unique event marker
@@ -79,8 +80,9 @@ opts = detectImportOptions(eventMarkerMappingFilename, 'Sheet', 'Experiment1');
 opts = setvartype(opts,'NewPrecedingCode','string'); % Specify that this column is imported as a string
 eventMarkerMapping = readtable(eventMarkerMappingFilename, opts, 'Sheet', 'Experiment1'); % Import eventMarkerMapping spreadsheet
 
-% Specify the maximum trial presentation number of each stimulus. NOTE: This variable 
-% assumes that each stimulus will be presented the same number of times. 
+% Specify the maximum trial presentation number of each stimulus. 
+% NOTE: This variable assumes that each stimulus will be presented the 
+% same number of times. 
 presentNumber = 10; 
 presentNumberArray = pad(string(1:presentNumber),2,'left','0')'; % Create a formatted string array containing the specified trial presentation numbers
 
@@ -101,8 +103,8 @@ allPrecCode = eventMarkerMapping.NewPrecedingCode;
 
 % Generate all possible 5-digit event markers by appending each unique
 % preceding code (e.g., 301) with all possible trial presentation numbers
-% (e.g., ["30101", "30102", "30103", "30104", "30105", "30106", "30107",
-% "30108", "30109", "30110"])
+% (e.g., 1-10). For example: ["30101", "30102", "30103", "30104", "30105", 
+% "30106", "30107", "30108", "30109", "30110"]
 allConditionsArray = strcat(repelem(allPrecCode,10), repmat(presentNumberArray,length(allPrecCode),1));
 
 %% 2. CREATE TRIAL-SPECIFIC BINS (I.E., EACH PRESENTATION OF A UNIQUE STIMULUS HAS A BIN)

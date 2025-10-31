@@ -20,7 +20,7 @@
     %   condition A (Neutral) has a peak amplitude of 581 µV, which corresponds 
     %   to a mean amplitude of -10.002 µV over a 300-500 ms time window at C4. 
     % - Real noise from the infant noise profile are added in a subsequent
-    %   step in simulateOneSample_forDiffWave. 
+    %   step in simulateOneSample_forDiffWave.m. 
 
 % ***See Section3_SimulatedData README.md available on the LME_MixedEffectsERPDifferenceWave
 % GitHub for pipeline details: https://github.com/basclab/LME_MixedEffectsERPDifferenceWave/tree/main/Section3_SimulatedData
@@ -34,8 +34,8 @@
     % - decayRate: Decay rate type used to specify whether a 'different' or 
     %   'same' decay rate is simulated across the two emotion conditions. 
     % - sampleActorPeakAmpArray: Array of actor intercepts randomly generated in
-    %   the simulateOneSample function. The first value corresponds to the
-    %   intercept for actor 01, the second value corresponds to actor 02, etc.
+    %   the simulateOneSample_forDiffWave function. The first value corresponds 
+    %   to the intercept for actor 01, the second value corresponds to actor 02, etc.
     % - leadField: Data structure created in
     %   DiffWaveSim_02_SimulateERPData.m for specifying the lead field, 
     %   electrode montage, electrodes of interest, and dipole orientation.
@@ -207,8 +207,7 @@ function ERP = simulateOneSubject_forDiffWave(sampleEmotionPeakAmp_condB_oneSubj
         'peakAmplitudeSlope', emotionPeakAmpSlope, ...
         'peakAmplitudeDv', emotionPeakAmpDv, ...
         'peakLatencyDv', 0, ...
-        'peakLatencyShift', 0));
-   
+        'peakLatencyShift', 0));   
     
 %% 3. GENERATE TRIAL-LEVEL WAVEFORMS WITH PARAMETERS AND FUNCTION FROM STEPS 1-2
 

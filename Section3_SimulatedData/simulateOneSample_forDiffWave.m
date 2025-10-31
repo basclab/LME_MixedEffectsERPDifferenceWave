@@ -10,8 +10,8 @@
 % Notes:
 % - Actor intercepts are added to the peak amplitude for both emotion conditions 
 %   (condition A/Neutral and condition B/Happy).
-% - Subjects are assigned to a maternal sensitivity group (low or high) and
-%   an age group (younger or older). These two group assignments determine a 
+% - Subjects are assigned to a maternal sensitivity group (Low or High) and
+%   an age group (Younger or Older). These two group assignments determine a 
 %   subject's intercept that is added to their peak amplitude for condition B (Happy). 
 % - Peak amplitude values were chosen to produce a specific mean amplitude 
 %   value when extracted from C4 over a 300-500 ms time window. For example, 
@@ -31,10 +31,8 @@
     % - decayRate: Decay rate type used to specify whether a 'different' or 
     %   'same' decay rate is simulated across the two emotion conditions. 
     % - saveFolder: Folder for saving simulated data output files.
-    %   This parent folder has two subfolders: 01_MeanAmpOutput_PreMerge
-    %   and 01_SubjectDataLog, which are used for saving the corresponding
-    %   mean amplitude output files and subject data logs (see
-    %   Outputs section below for more information).  
+    %   This parent folder has the following subfolders: 01_NCMeanAmpOutput_PreMerge,
+    %   01_SubjectDataLog, and (optional) 01_ERPFiles (see Outputs section below). 
     % - leadField: Data structure created in 
     %   DiffWaveSim_02_SimulateERPData.m for specifying the lead field, 
     %   electrode montage, electrodes of interest, and dipole orientation.
@@ -98,10 +96,8 @@
         % - mSens_age: String composed of a subject's assigned [maternal sensitivity group]_[age group]
         %   (e.g., lowMSens_youngerAgeGroup). 
     % - (Optional) .erp files containing the trial-level waveforms for all
-    %   subjects in a sample. There is one file for each simulated sample
-    %   and they are saved directly in the saveFolder specified above (not
-    %   in a subfolder). These files are useful for visualizing waveforms
-    %   or troubleshooting.  
+    %   subjects in a sample. There is one file for each simulated sample.
+    %   These files are useful for visualizing waveforms or troubleshooting.  
 
 % Usage Example:
     % >> sample = 1;
@@ -146,7 +142,7 @@ function simulateOneSample_forDiffWave(sample, subjectN, decayRate, saveFolder, 
     saveSampleFilename = strcat('Sample', sprintf('%04d',sample)); % Format sample ID with leading zeros
     saveSampleMeanAmpFilename = strcat(saveFolder, '\01_NCMeanAmpOutput_PreMerge\', saveSampleFilename, '-NCMeanAmpOutput_PreMerge.txt'); 
     saveSampleSubjectDataLogFilename = strcat(saveFolder, '\01_SubjectDataLog\', saveSampleFilename, '-SubjectDataLog.txt');
-    %saveSampleERPFilename = strcat(saveSampleFilename, '.erp');
+    saveSampleERPFilename = strcat(saveFolder, '\01_ERPFiles\', saveSampleFilename, '.erp');
     
     % Create ALLERP structure for storing all subjects' ERP files
     ALLERP = buildERPstruct([]);
@@ -226,7 +222,9 @@ function simulateOneSample_forDiffWave(sample, subjectN, decayRate, saveFolder, 
         % Create bin equations with randomly paired simulated trials and
         % real noise trials
         subjectBinEquations = strcat("nb", string(binArray_simul), " = b", string(binArray_simul), " + b", string(binArray_noiseRandom), " label ", binLabelArray);
-        subjectERP_final = pop_binoperator( subjectERP_append, cellstr(subjectBinEquations));
+        % Add the randomly assigned noise trial to the corresponding
+        % simulated trial using the bin equations
+        subjectERP_final = pop_binoperator( subjectERP_append, cellstr(subjectBinEquations)); 
      
         ALLERP(subject) = subjectERP_final; % Store this subject's final ERP file in the ALLERP structure
     end
