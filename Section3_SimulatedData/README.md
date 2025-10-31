@@ -7,7 +7,7 @@ This folder contains pipeline scripts used to simulate realistic Negative Centra
 ## Script overview
 
 *MATLAB scripts for simulating trial-level ERP data*
-* **DiffWaveSim_01_CreateBinDescriptorFile.m**: Creates a bin descriptor file using the LMESimulation_EventMarkerMappingKey.xlsx file. The bin descriptor file is used to extract trial-level bins (i.e., each bin corresponds to a presentation of a specific condition/stimulus) in subsequent scripts (DiffWaveSim_02_SimulateERPData.m, simulateOneSubject_forDiffWave.m). 
+* **DiffWaveSim_01_CreateBinDescriptorFile.m**: Creates a bin descriptor file using the LMESimulation_EventMarkerMappingKey.xlsx file. The bin descriptor file is used to extract trial-level bins (i.e., each bin corresponds to a presentation of a specific emotion condition and actor) in subsequent scripts (DiffWaveSim_02_SimulateERPData.m, simulateOneSubject_forDiffWave.m). 
 * **DiffWaveSim_02_SimulateERPData.m**: Simulates trial-level ERP data using two helper functions (simulateOneSample_forDiffWave.m, and simulateOneSubject_forDiffWave.m). More information about the simulation parameters are included in Appendix B of Heise et al. (2025).
 
 *R scripts for organizing data files and fitting LME and ANOVA models*
