@@ -1,19 +1,19 @@
 # Difference Wave Analysis of Real Preschooler ERP Data
 
-# This script was used to analyze the NC difference wave mean amplitudes presented 
-# in Section 4 of Heise, Mon, and Bowman (submitted). The input files contain
-# NC mean amplitudes for two emotion conditions: 
+# This script was used to analyze the Negative central (NC) difference wave mean 
+# amplitudes presented in Section 4 of Heise, Mon, and Bowman (2025). The input 
+# files contain NC mean amplitudes for two emotion conditions: 
 # Full-Intensity Angry and Reduced-Intensity Angry
 
-# Our research question was: is the Full-minus-Reduced-Intensity Angry 
-# NC difference wave modulated by a continuous predictor (perceptual sensitivity 
-# subscale from the Early Childhood Behavioral Questionnaire-Short Form)?
+# Our research question was: is the degree of children's perceptual sensitivity 
+# positively associated with greater differentiation between Full-Intensity and 
+# Reduced-Intensity Angry as measured through difference wave mean amplitudes?
 
 # We compare several difference wave analysis approaches:
   # - Six LME approaches: Interaction, Exact Match, three types of Nearest
   #   Neighbor, Random Permutation
   # - Two conventional linear regression approaches using two common trial thresholds:
-  #  10 trials per condition, 15 trials per condition
+  #   10 trials per condition, 15 trials per condition
 # See manuscript for more information about each analysis approach. 
 
 # Requirements:
@@ -31,7 +31,7 @@
   # 6. Fit LME Nearest Neighbor: No Prioritization model
   # 7. Fit LME Nearest Neighbor: Presentation Number Prioritization model
   # 8. Fit LME Nearest Neighbor: Stimulus Feature Prioritization model
-  # 9. Fit LME: Random Permutation model
+  # 9. Fit LME Random Permutation model
   # 10. Fit 10-Trial Regression model
   # 11. Fit 15-Trial Regression model
   # 12. Compare ECBQ perceptual sensitivity estimates across models
@@ -62,12 +62,12 @@
 
 # Load required packages
 library(dplyr) # V.1.0.2; dataframe manipulation
-library(car) # V.3.01-0; contr.sum function 
+library(car) # V.3.0-10; contr.sum function 
 library(rstatix) # V.0.6.0; regression assumption checks
 library(tidyverse) # V.1.3.0; group_by function 
 library(lme4) # V.1.1-25; LME models
 library(lmerTest) # V.3.1-3; p-values for LME
-library(MatchIt) # V.4.1.0; nearest neighbor trial pairing 
+library(MatchIt) # V.4.5.0; nearest neighbor trial pairing 
 library(tidyr) # V.1.1.2; spread function
 library(emmeans) # V.1.5.3; estimated marginal means calculation
 library(performance) # V.0.6.1; check_convergence function
@@ -91,8 +91,8 @@ source("setNSFunctions.R")
   #   dfOutput_wide <- makeWide_realData(dfInput_long)
 # - Input: 
   # - dfInput_long: Trial-level dataframe in which rows have been sorted based on trial pairing ID
-  #   and condition (e.g., row 1 is trial pair 1/Full Angry, row 2 is trial pair 1/Redu Angry,
-  #   row 3 is trial pair 2/Full Angry, row 4 is trial pair 2/Redu Angry, etc.). 
+  #   and condition (e.g., row 1 is trial pair 1/FullAngry, row 2 is trial pair 1/ReduAngry,
+  #   row 3 is trial pair 2/FullAngry, row 4 is trial pair 2/ReduAngry, etc.). 
 # - Output: 
   # - dfOutput_wide: Trial-paired dataframe in wide format in which each condition
   #   has columns for mean amplitude and trial presentation number. 
@@ -119,16 +119,17 @@ makeWide_realData = function(dfInput_long) {
 
 # Data files are in long format:
   # - For the trial-level data, each row corresponds to one participant, one electrode,
-  #   one trial presentation, and one condition.
+  #   one condition, one actor, and one trial presentation.
   # - For the condition-level data, each row corresponds to one participant and one 
-  #   condition (data has been averaged across electrode and trial presentations).
+  #   condition (data has been averaged across electrodes, actors, and trial presentations).
   # - Full-Intensity Angry is labelled as FullAngry and Reduced-Intensity Angry is
   #   labelled as ReduAngry.
+  # - See DataDictionary.xlsx for more information on variables.
 
 setwd('C:/Users/basclab/Desktop/Section4_RealData')
-dfTrial <- read.csv('nc_mAmp_trialLevel.csv')
-dfCond_10TrialMin <- read.csv(nc_mAmp_condLevel_10TrialMin.csv)
-dfCond_15TrialMin <- read.csv(nc_mAmp_condLevel_15TrialMin.csv)
+dfTrial <- read.csv('nc_mAmp_trialLevel_example.csv')
+dfCond_10TrialMin <- read.csv('nc_mAmp_condLevel_10TrialMin_example.csv')
+dfCond_15TrialMin <- read.csv('nc_mAmp_condLevel_15TrialMin_example.csv')
 
 #-------------------------------------------------------------------------------
 # 3. FORMAT TRIAL-LEVEL DATA FOR ANALYSIS
@@ -137,16 +138,16 @@ dfCond_15TrialMin <- read.csv(nc_mAmp_condLevel_15TrialMin.csv)
 dfTrial$SUBJECTID <- as.factor(dfTrial$SUBJECTID) 
 dfTrial$ACTOR <- as.factor(dfTrial$ACTOR)
 
-# Sum code emotion column and specify factor ordering of FullAngry before ReduAngry 
-# for subsequent processing with makeWide_realData function 
+# Specify effects coding for the emotion condition column such that FullAngry 
+# is ordered before ReduAngry for subsequent processing with makeWide_realData function 
 dfTrial$emotion <- factor(dfTrial$emotion, levels = c("FullAngry", "ReduAngry"))
 contrasts(dfTrial$emotion)=contr.Sum(levels(dfTrial$emotion))
 
 # Set Cz as the reference level for Interaction model analysis
 dfTrial$electrode <- factor(dfTrial$electrode, levels = c("Cz","C3","C4"))
 
-# Create column of 0's and 1's where FullAngry is set as the 'treatment' group
-# (1) for matchit function (Nearest Neighbor approaches)
+# Create column of 0's and 1's where FullAngry is set as the 'treatment' group (1)
+# for matchit function (Nearest Neighbor approaches)
 dfTrial$emotionBinary <- ifelse(dfTrial$emotion == "FullAngry", 1, 0)
 
 #-------------------------------------------------------------------------------
@@ -175,16 +176,16 @@ dfTrial_EM <- subset(dfTrial, select = -c(emotionBinary))
 # Create trial pairs that are matched on all features using spread function
 dfTrial_EM <- spread(dfTrial_EM, emotion, meanAmpNC)
 # Calculate Full-minus-Reduced-Intensity Angry difference wave
-dfTrial_EM$diffWaveMeanAmpNC <- dfTrial_EM$FullAngry - dfTrial_EM$ReduAngry
+dfTrial_EM$meanAmpNC_FullMinusRedu <- dfTrial_EM$FullAngry - dfTrial_EM$ReduAngry
 
 # Specify Exact Match model formula where predictor of interest is ECBQ_per
-formulaLME_EM <- diffWaveMeanAmpNC ~ presentNumber + ECBQ_per + (1|SUBJECTID)
+formulaLME_EM <- meanAmpNC_FullMinusRedu ~ presentNumber + ECBQ_per + (1|SUBJECTID)
 LME_EM <- lmer(formulaLME_EM, data=dfTrial_EM, REML=TRUE)
 summary(LME_EM) 
 
 # Check LME assumptions:
 # - Linearity (Need to remove NA rows from dfTrial_EM in order to compare with model residuals)
-plot(resid(LME_EM),dfTrial_EM$diffWaveMeanAmpNC[!is.na(dfTrial_EM$diffWaveMeanAmpNC)]) 
+plot(resid(LME_EM),dfTrial_EM$meanAmpNC_FullMinusRedu[!is.na(dfTrial_EM$meanAmpNC_FullMinusRedu)]) 
 # - Normal distribution of residuals
 qqmath(LME_EM) 
 # - Homoscedasticity of emotion condition not applicable because only 1 difference wave condition 
@@ -194,7 +195,7 @@ qqmath(LME_EM)
 # This Nearest Neighbor model is abbreviated as NN_N
 
 # Identify trial pairs that have an exact match based on SUBJECTID and electrode  
-# and a greedy match based on trial presentation number and actor 
+# and a greedy match based on trial presentation number and ACTOR
 matchOutput_NN_N <- matchit(emotionBinary ~ presentNumber + ACTOR, data = dfTrial,
                             method = "nearest", distance = "mahalanobis", exact = c("SUBJECTID", "electrode"))
 # Extract data with paired trials only (i.e., exclude unmatched trials)
@@ -202,25 +203,25 @@ dfTrial_NN_N <- match.data(matchOutput_NN_N)
 # Order rows from trial pairing ID (i.e., subclass) 1-s; and within each subclass: emotion FullAngry, then ReduAngry 
 # (important for makeWide_realData function which assumes that each trial pair has been sorted by condition) 
 # - Note that we don't need to sort based on SUBJECTID and electrode because that has
-# already been taken into account by the trial pairing ID.
+#   already been taken into account by the trial pairing ID.
 dfTrial_NN_N <- dfTrial_NN_N[order(dfTrial_NN_N$subclass, dfTrial_NN_N$emotion),]
 # Make dataframe wide so we can calculate trial-level difference waves
 dfTrial_NN_N <- makeWide_realData(dfTrial_NN_N) 
 
 # Calculate trial-level difference wave mean amplitudes
-dfTrial_NN_N$diffWaveMeanAmpNC <- dfTrial_NN_N$meanAmpNC.FullAngry - dfTrial_NN_N$meanAmpNC.ReduAngry
+dfTrial_NN_N$meanAmpNC_FullMinusRedu <- dfTrial_NN_N$meanAmpNC.FullAngry - dfTrial_NN_N$meanAmpNC.ReduAngry
 
 # Calculate average trial presentation number for each trial pair
 dfTrial_NN_N$presentNumberAvg <- (dfTrial_NN_N$presentNumber.FullAngry + dfTrial_NN_N$presentNumber.ReduAngry)/2
 
 # Specify Nearest Neighbor model formula where predictor of interest is ECBQ_per
-formulaLME_NN <- diffWaveMeanAmpNC ~ presentNumberAvg + ECBQ_per + (1|SUBJECTID)
+formulaLME_NN <- meanAmpNC_FullMinusRedu ~ presentNumberAvg + ECBQ_per + (1|SUBJECTID)
 LME_NN_N <- lmer(formulaLME_NN, data=dfTrial_NN_N, REML=TRUE)
 summary(LME_NN_N) 
 
 # Check LME assumptions:
 # - Linearity
-plot(resid(LME_NN_N),dfTrial_NN_N$diffWaveMeanAmpNC)
+plot(resid(LME_NN_N),dfTrial_NN_N$meanAmpNC_FullMinusRedu)
 # - Normal distribution of residuals
 qqmath(LME_NN_N) 
 # - Homoscedasticity of emotion condition not applicable because only 1 difference wave condition 
@@ -230,7 +231,7 @@ qqmath(LME_NN_N)
 # This Nearest Neighbor model is abbreviated as NN_P
 
 # Identify trial pairs that have an exact match based on SUBJECTID, electrode, and
-# trial presentation number and a greedy match based on actor 
+# trial presentation number and a greedy match based on ACTOR 
 matchOutput_NN_P <- matchit(emotionBinary ~ ACTOR, data = dfTrial,
                             method = "nearest", distance = "mahalanobis", exact = c("SUBJECTID", "electrode", "presentNumber"))
 # Repeat same process of extracting trial-paired data and calculating difference wave 
@@ -238,7 +239,7 @@ matchOutput_NN_P <- matchit(emotionBinary ~ ACTOR, data = dfTrial,
 dfTrial_NN_P <- match.data(matchOutput_NN_P) 
 dfTrial_NN_P <- dfTrial_NN_P[order(dfTrial_NN_P$subclass, dfTrial_NN_P$emotion),]
 dfTrial_NN_P <- makeWide_realData(dfTrial_NN_P) 
-dfTrial_NN_P$diffWaveMeanAmpNC <- dfTrial_NN_P$meanAmpNC.FullAngry - dfTrial_NN_P$meanAmpNC.ReduAngry
+dfTrial_NN_P$meanAmpNC_FullMinusRedu <- dfTrial_NN_P$meanAmpNC.FullAngry - dfTrial_NN_P$meanAmpNC.ReduAngry
 dfTrial_NN_P$presentNumberAvg <- (dfTrial_NN_P$presentNumber.FullAngry + dfTrial_NN_P$presentNumber.ReduAngry)/2
 # Fit model using same Nearest Neighbor LME equation as in Section 6
 LME_NN_P <- lmer(formulaLME_NN, data=dfTrial_NN_P, REML=TRUE)
@@ -246,7 +247,7 @@ summary(LME_NN_P)
 
 # Check LME assumptions:
 # - Linearity
-plot(resid(LME_NN_P),dfTrial_NN_P$diffWaveMeanAmpNC) 
+plot(resid(LME_NN_P),dfTrial_NN_P$meanAmpNC_FullMinusRedu) 
 # - Normal distribution of residuals
 qqmath(LME_NN_P)
 # - Homoscedasticity of emotion condition not applicable because only 1 difference wave condition 
@@ -256,7 +257,7 @@ qqmath(LME_NN_P)
 # This Nearest Neighbor model is abbreviated as NN_F
 
 # Identify trial pairs that have an exact match based on SUBJECTID, electrode, and
-# actor (stimulus feature) and a greedy match based on trial presentation number
+# ACTOR (stimulus feature) and a greedy match based on trial presentation number
 matchOutput_NN_F <- matchit(emotionBinary ~ presentNumber, data = dfTrial,
                             method = "nearest", distance = "mahalanobis", exact = c("SUBJECTID", "electrode", "ACTOR"))
 # Repeat same process of extracting trial-paired data and calculating difference wave 
@@ -264,7 +265,7 @@ matchOutput_NN_F <- matchit(emotionBinary ~ presentNumber, data = dfTrial,
 dfTrial_NN_F <- match.data(matchOutput_NN_F) 
 dfTrial_NN_F <- dfTrial_NN_F[order(dfTrial_NN_F$subclass, dfTrial_NN_F$emotion),]
 dfTrial_NN_F <- makeWide_realData(dfTrial_NN_F) 
-dfTrial_NN_F$diffWaveMeanAmpNC <- dfTrial_NN_F$meanAmpNC.FullAngry - dfTrial_NN_F$meanAmpNC.ReduAngry
+dfTrial_NN_F$meanAmpNC_FullMinusRedu <- dfTrial_NN_F$meanAmpNC.FullAngry - dfTrial_NN_F$meanAmpNC.ReduAngry
 dfTrial_NN_F$presentNumberAvg <- (dfTrial_NN_F$presentNumber.FullAngry + dfTrial_NN_F$presentNumber.ReduAngry)/2
 # Fit model using same Nearest Neighbor LME equation as in Section 6
 LME_NN_F <- lmer(formulaLME_NN, data=dfTrial_NN_F, REML=TRUE)
@@ -272,7 +273,7 @@ summary(LME_NN_F)
 
 # Check LME assumptions:
 # - Linearity
-plot(resid(LME_NN_F),dfTrial_NN_F$diffWaveMeanAmpNC) 
+plot(resid(LME_NN_F),dfTrial_NN_F$meanAmpNC_FullMinusRedu) 
 # - Normal distribution of residuals
 qqmath(LME_NN_F) 
 # - Homoscedasticity of emotion condition not applicable because only 1 difference wave condition 
@@ -305,14 +306,14 @@ LME_output_RP_allIter <- vector("list", iterN)
 
 # Specify Random Permutation model formula where predictor of interest is ECBQ_per 
 # (same as Nearest Neighbor model formula)
-formulaLME_RP <- diffWaveMeanAmpNC ~ presentNumberAvg + ECBQ_per + (1|SUBJECTID)
+formulaLME_RP <- meanAmpNC_FullMinusRedu ~ presentNumberAvg + ECBQ_per + (1|SUBJECTID)
 
 set.seed(20230317) # Set seed for reproducible results
 LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performance', 'emmeans', 'lme4', 'lmerTest', 'afex')) %dorng% { # Loop through each random perm iteration
   # For each row of subjectEmotionNTable (corresponding to the number of trials per condition for each participant):
   # 1) divide number of trials by 3 to get number of trials for one electrode
-  # 2) randomly order integers 1-trialN_FullAngry; then randomly order integers 1-trialN_ReduAngry (no replacement);
-  # 3) concatenate these two arrays into one array and then use unlist to save in one array;
+  # 2) randomly order integers 1-trialN_FullAngry; then randomly order integers 1-trialN_ReduAngry (no replacement)
+  # 3) concatenate these two arrays into one array and then use unlist to save in one array
   # 4) add this array as the subclass column in dfTrial_order
   # Note: The subclass pairing assumes that dfTrial_order has already been ordered based on participant, electrode, and condition! 
   dfTrial_order$subclass <- unlist(apply(subjectEmotionNTable, 1,
@@ -336,7 +337,7 @@ LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performan
   dfTrial_RP <- makeWide_realData(dfTrial_RP) 
   
   # Calculate trial-level difference wave mean amplitudes
-  dfTrial_RP$diffWaveMeanAmpNC <- dfTrial_RP$meanAmpNC.FullAngry - dfTrial_RP$meanAmpNC.ReduAngry
+  dfTrial_RP$meanAmpNC_FullMinusRedu <- dfTrial_RP$meanAmpNC.FullAngry - dfTrial_RP$meanAmpNC.ReduAngry
   
   # Calculate average trial presentation number for each trial pair
   dfTrial_RP$presentNumberAvg <- (dfTrial_RP$presentNumber.FullAngry + dfTrial_RP$presentNumber.ReduAngry)/2
@@ -344,7 +345,7 @@ LME_output_RP_allIter <- foreach (i=1:iterN, .packages=c('tidyverse', 'performan
   # Fit LME model
   LME_RP <- lmer(formulaLME_RP, data=dfTrial_RP, REML=TRUE)
 
-  # If the model does not have problems
+  # If the model does not have problems (i.e., non-convergence or singular fit)
   if (check_convergence(LME_RP) && !check_singularity(LME_RP)) {
     # Extract emmeans for ECBQ perceptual predictor
     mLME_RP <- emtrends(LME_RP, ~ECBQ_per, var = "ECBQ_per", 
@@ -426,17 +427,17 @@ showConnections()
 
 # Calculate mean-averaged difference waves from condition-level data
 dfMeanAvg_10TrialMin <- spread(dfCond_10TrialMin, emotion, meanAmpNC)
-dfMeanAvg_10TrialMin$diffWaveMeanAmpNC <- dfMeanAvg_10TrialMin$FullAngry - dfMeanAvg_10TrialMin$ReduAngry
+dfMeanAvg_10TrialMin$meanAmpNC_FullMinusRedu <- dfMeanAvg_10TrialMin$FullAngry - dfMeanAvg_10TrialMin$ReduAngry
 
 # Specify regression model formula where predictor of interest is ECBQ_per
 # (same for both 10-Trial and 15-Trial Regression) 
-formulaReg = diffWaveMeanAmpNC ~ ECBQ_per
+formulaReg = meanAmpNC_FullMinusRedu ~ ECBQ_per
 reg_10TrialMin <- lm(formulaReg, data = dfMeanAvg_10TrialMin)
 summary(reg_10TrialMin)
 
 # Check regression assumptions:
 # - Linearity
-plot(resid(reg_10TrialMin),dfMeanAvg_10TrialMin$diffWaveMeanAmpNC) 
+plot(resid(reg_10TrialMin),dfMeanAvg_10TrialMin$meanAmpNC_FullMinusRedu) 
 # - Normal distribution of residuals
 # We use the shapiro_test function, which requires sample size between 3 and 5000 
 # (not applicable for trial-level data)
@@ -448,7 +449,7 @@ shapiro_test(residuals(reg_10TrialMin))
 
 # Calculate mean-averaged difference waves from condition-level data
 dfMeanAvg_15TrialMin <- spread(dfCond_15TrialMin, emotion, meanAmpNC)
-dfMeanAvg_15TrialMin$diffWaveMeanAmpNC <- dfMeanAvg_15TrialMin$FullAngry - dfMeanAvg_15TrialMin$ReduAngry
+dfMeanAvg_15TrialMin$meanAmpNC_FullMinusRedu <- dfMeanAvg_15TrialMin$FullAngry - dfMeanAvg_15TrialMin$ReduAngry
 
 # Fit same regression model formula as for 10-Trial Regression (see Section 10) 
 reg_15TrialMin <- lm(formulaReg, data = dfMeanAvg_15TrialMin)
@@ -456,7 +457,7 @@ summary(reg_15TrialMin)
 
 # Check regression assumptions:
 # - Linearity
-plot(resid(reg_15TrialMin),dfMeanAvg_15TrialMin$diffWaveMeanAmpNC) 
+plot(resid(reg_15TrialMin),dfMeanAvg_15TrialMin$meanAmpNC_FullMinusRedu) 
 # - Normal distribution of residuals
 shapiro_test(residuals(reg_15TrialMin))
 # - Homoscedasticity of emotion condition not applicable because only 1 difference wave condition 
