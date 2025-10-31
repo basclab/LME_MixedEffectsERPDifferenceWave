@@ -130,10 +130,9 @@ makeWide_realData = function(dfInput_long) {
   # - Full-Intensity Angry is labelled as FullAngry and Reduced-Intensity Angry is
   #   labelled as ReduAngry.
   # - See DataDictionary.xlsx for more information on variables.
-
-dfTrial <- read.csv('nc_mAmp_trialLevel.csv')
-dfCond_10TrialMin <- read.csv('nc_mAmp_condLevel_10TrialMin.csv')
-dfCond_15TrialMin <- read.csv('nc_mAmp_condLevel_15TrialMin.csv')
+dfTrial <- read.csv('nc_mAmp_trialLevel_example.csv')
+dfCond_10TrialMin <- read.csv('nc_mAmp_condLevel_10TrialMin_example.csv')
+dfCond_15TrialMin <- read.csv('nc_mAmp_condLevel_15TrialMin_example.csv')
 
 #-------------------------------------------------------------------------------
 # 3. FORMAT TRIAL-LEVEL DATA FOR ANALYSIS
