@@ -12,7 +12,8 @@
   # - importFilename: File containing the estimated marginal means for each 
   #   maternal sensitivity group and other model predictors across all models and
   #   simulated datasets (samples) for one type of decay and missingness pattern 
-  #   (e.g., same decay/Missingness Pattern #1)
+  #   (e.g., different decay/Missingness Pattern #1). See ModelOutput_DataDictionary.xlsx 
+  #   file for further information.
   # - See instructions in data environment for specifying other variables
 
 # Script Functions:
@@ -27,7 +28,7 @@
 
 # Outputs: 
   # - Tables summarizing number of trials/subjects, statistical power, error, and
-  #   bias for each difference wave approach.
+  #   bias for each difference wave approach
   # - Visualizations of marginal means for each maternal sensitivity group 
 
 # Copyright 2024 Megan J. Heise, Serena K. Mon, Lindsay C. Bowman
@@ -99,6 +100,14 @@ modelOutput$modelMatch <- factor(modelOutput$modelMatch, levels = c('LME_Int', '
 modelOutput$caseDeletionPct <- factor(modelOutput$caseDeletionPct, levels = c('Pop.','0%','6%','11%','32%'),
                                       labels = c('Population', '0% Low Trial-Count', '6% Low Trial-Count',
                                                  '11% Low Trial-Count', '32% Low Trial-Count')) 
+
+# Check for occurrence of models with specific problems and then update corresponding variables:
+# - notConvergeN = -99 & singFitN = 1: Special singular fit error (Lapack routine dgesv: system is exactly singular: U[1,1] = 0)
+spSingFitN_ind <- which(modelOutput$notConvergeN == -99 & modelOutput$singFitN == 1)
+modelOutput$notConvergeN[spSingFitN_ind] = 1
+# - notConvergeN = -99 & singFitN = -99: Other type of error
+#   This did not occur for any simulated sample so no updates were needed 
+otherError_ind <- which(modelOutput$notConvergeN == -99 & modelOutput$singFitN == -99)
 
 # Update usable trial and subject count to NA if model had problems 
 modelOutput$trialN[modelOutput$notConvergeN == 1 | modelOutput$singFitN == 1] <- NA
@@ -193,7 +202,7 @@ modelProblemTable <- modelOutput_final_modPr %>%
 # (for LME Random Permutation, the percent is based on the total number of iterations*samples)
 modelProblemTable_final <- modelProblemTable %>%
   mutate(notConvergeN_pct = round(ifelse(modelMatch == "Rand P", 100*notConvergeN_sum/(sampleN*rpIter), 100*notConvergeN_sum/sampleN),3),
-         singFitN_pct = round(ifelse(modelMatch == "Rand P", 100*singFitN_sum/(sampleN*rpIter), 100*singFitN_sum/sampleN),1),
+         singFitN_pct = round(ifelse(modelMatch == "Rand P", 100*singFitN_sum/(sampleN*rpIter), 100*singFitN_sum/sampleN),3),
          allProb_pct = notConvergeN_pct + singFitN_pct)
 
 #-------------------------------------------------------------------------------

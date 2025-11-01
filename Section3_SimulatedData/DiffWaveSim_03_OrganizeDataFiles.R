@@ -2,7 +2,7 @@
 
 # This script imports the mean amplitude .txt file for each simulated dataset
 # (sample). Subject ID and stimuli-related information for each trial are extracted 
-# the bin label column, which is formatted as [SUBJECTID]_:_[trial-specific bin label] 
+# from the bin label column, which is formatted as [SUBJECTID]_:_[trial-specific bin label] 
 # (e.g., 01_:_30101):
   # - The first two digits of the label is the subject ID (e.g., 01)
   # - The first digit after the _:_ is the emotion condition (e.g., 3)
@@ -18,8 +18,8 @@
 # Requirements: 
   # - Needs R Version 3.6.1 and packages listed below
   # - importParentFolder: Folder containing two subfolders with simulated files
-  #   created by DiffWaveSim_02_SimulateERPData.m: MeanAmpOutput_PreMerge 
-  #   (contains mean amplitude output files) and SubjectDataLog (contains logs of 
+  #   created by DiffWaveSim_02_SimulateERPData.m: 01_NCMeanAmpOutput_PreMerge 
+  #   (contains mean amplitude output files) and 01_SubjectDataLog (contains logs of 
   #   each subject's assigned maternal sensitivity and age group)
   # - saveFolder: Folder for saving the merged dataframe containing each subject's
   #   mean amplitude output, assigned maternal sensitivity and age group, and
@@ -94,8 +94,8 @@ saveFolder <- 'C:/Users/basclab/Desktop/Section3_SimulatedData/02_NCMeanAmpOutpu
 
 for (meanAmpFile in meanAmpDir) { # Loop through each sample
   # Extract sample ID number from filename (e.g., extract '0001' from
-  # 'C:/Users/basclab/Desktop/LME_Simulation/01_MeanAmpOutput_PreMerge/Sample0001-MeanAmpOutput_PreMerge.txt')
-  sampleID <- str_sub(meanAmpFile,-31,-28)
+  # 'C:/Users/basclab/Desktop/Section3_SimulatedData/01_MeanAmpOutput_PreMerge/Sample0001-NCMeanAmpOutput_PreMerge.txt')
+  sampleID <- str_sub(meanAmpFile,-33,-30)
   # Create filename for final dataframe
   saveFilename <- paste0(saveFolder, '/Sample', sampleID, '-NCMeanAmpOutput.csv')
   
@@ -133,7 +133,7 @@ for (meanAmpFile in meanAmpDir) { # Loop through each sample
   # 5. SAVE FINAL LONG DATAFRAME AS A .CSV FILE
   
   # Specify the columns that we want to save in the exported file
-  columnOrder <- c("SUBJECTID","mSens", "age","emotion","ACTOR","presentNumber","meanAmpNC")
+  columnOrder <- c("SUBJECTID","mSens","age","emotion","ACTOR","presentNumber","meanAmpNC")
   dfOriginal <- dfOriginalRaw[, ..columnOrder] 
   
   fwrite(dfOriginal, file = saveFilename, row.names = FALSE) # Save long dataframe in desired folder

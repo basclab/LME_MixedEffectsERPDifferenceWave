@@ -30,8 +30,9 @@
 # Outputs: 
   # - One .csv file containing the estimated marginal means for each maternal 
   #   sensitivity group and other model predictors across all models and simulated
-  #   datasets for one type of decay and missingness pattern (e.g., same decay/
-  #   Missingness Pattern #1)
+  #   datasets for one type of decay and missingness pattern (e.g., different decay/
+  #   Missingness Pattern #1). See ModelOutput_DataDictionary.xlsx file for further
+  #   information.
 
 # Copyright 2024 Megan J. Heise, Serena K. Mon, Lindsay C. Bowman
 # Brain and Social Cognition Lab, University of California Davis, Davis, CA, USA.
@@ -105,10 +106,10 @@ decayRate <- 'different' # Used for saveModelOutputName variable only
   #   are drawn from each trial presentation number (MCAR).
 presentNumberWeight6to10 <- 0.7
 
-# Specify probability weight distribution for younger age group. 
+# Specify probability weight distribution for Younger age group. 
   # - The weight for older age is equal to 1 - ageWeightyounger.
   # - For example, if ageWeightYounger = 0.7, then 70% of subjects selected for 
-  #   more missing trials and subsequent casewise deletion are from the younger 
+  #   more missing trials and subsequent casewise deletion are from the Younger 
   #   age group. 
 ageWeightYounger <- 0.7
 
@@ -196,7 +197,7 @@ modelOutput <- foreach (i=1:sampleN, .packages=c('tidyr', 'data.table', 'perform
   # Fit population-level ANOVA model
   modelOutput[[3]] <- fitANOVA(dfOriginal)
   modelOutput[[3]]$caseDeletionPct <- "Pop."
-  modelOutput[[3]]$matchMethod <- "DW"
+  modelOutput[[3]]$matchMethod <- "DW" # Record ANOVA 'difference wave' approach
   modelOutput[[3]]$sample <- sampleID
   modelOutput[[3]]$sampleRP <- 0
   

@@ -116,10 +116,10 @@ allTrials_Int <- function(dfInput_noNA, formulaInput) {
   dfInput_noNA$ACTOR <- as.factor(dfInput_noNA$ACTOR)
   dfInput_noNA$SUBJECTID <- as.factor(dfInput_noNA$SUBJECTID)
   dfInput_noNA$emotion <- as.factor(dfInput_noNA$emotion)
-  # Sum code age factor 
+  # Specify effects coding for the age factor 
   dfInput_noNA$age <- as.factor(dfInput_noNA$age)
   contrasts(dfInput_noNA$age) <- contr.Sum(levels(dfInput_noNA$age)) 
-  # Sum code maternal sensitivity factor
+  # Specify effects coding for the maternal sensitivity factor
   dfInput_noNA$mSens <- as.factor(dfInput_noNA$mSens)
   contrasts(dfInput_noNA$mSens) <- contr.Sum(levels(dfInput_noNA$mSens)) 
   
@@ -127,7 +127,7 @@ allTrials_Int <- function(dfInput_noNA, formulaInput) {
   fit.LME <- lmer(formulaInput, data = dfInput_noNA, REML = TRUE)
   
   tryCatch({
-    # If the model does not have problems
+    # If the model does not have problems (i.e., non-convergence or singular fit)
     if (check_convergence(fit.LME) && !check_singularity(fit.LME)) { 
       # Calculate marginal means for each maternal sensitivity group. We use 
       # revpairwise so that we extract the condition B-A contrast (comparable to 
@@ -247,7 +247,7 @@ allTrials_Int <- function(dfInput_noNA, formulaInput) {
   # - modelOutput: Dataframe containing the estimated marginal means for each maternal 
   #   sensitivity group and other model predictors.
 pairTrials_EM <- function(dfInput_noNA, formulaInput) {
-  # Create trial pairs that are matched on all features using spread function
+  # Create trial pairs that are matched on all features using reshape function
   dfInput_pairedWide <- stats::reshape(dfInput_noNA, 
                                        v.names = "meanAmpNC",
                                        idvar = c("SUBJECTID", "ACTOR", "presentNumber"),
@@ -329,7 +329,7 @@ pairTrials_NN_P <- function(dfInput_noNA, formulaInput){
   # (1) for matchit function 
   dfInput_noNA$emotionBinary <- ifelse(dfInput_noNA$emotion == "A", 1, 0)
   
-  # Identify trial pairs that have an exact match based on SUBJECTID, and trial
+  # Identify trial pairs that have an exact match based on SUBJECTID and trial
   # presentation number and a greedy match based on actor 
   matchOutput <- matchit(emotionBinary ~ ACTOR, data = dfInput_noNA,
                          method = "nearest", distance = "mahalanobis", exact = c("SUBJECTID", "presentNumber"))
@@ -374,7 +374,7 @@ pairTrials_NN_F <- function(dfInput_noNA, formulaInput){
   dfInput_noNAMatch <- match.data(matchOutput) 
   dfInput_noNAMatch <- dfInput_noNAMatch[order(dfInput_noNAMatch$subclass, dfInput_noNAMatch$emotion), ]
   dfInput_noNAMatch <- dfInput_noNAMatch[, c("SUBJECTID", "mSens", "age", "presentNumber", "meanAmpNC")]
-  dfInput_pairedWide <- makeWide(dfInput_noNAMatch) # Make dataframe wide so we can calculate mean amp difference in next line
+  dfInput_pairedWide <- makeWide(dfInput_noNAMatch)
   dfInput_pairedWide$meanAmpNC_BMinusA <- dfInput_pairedWide$meanAmpNC.B - dfInput_pairedWide$meanAmpNC.A
   dfInput_pairedWide$presentNumberAvg <- (dfInput_pairedWide$presentNumber.A + dfInput_pairedWide$presentNumber.B)/2
   
@@ -401,8 +401,8 @@ pairTrials_RP <- function(dfInput_noNA, formulaInput, rpIter) {
   
   for(i in 1:rpIter) { # Loop through each random perm iteration
     # For each row of subjectEmotionNTable (corresponding to the number of trials per condition for each subject):
-    # 1) randomly order integers 1-trialN_A; then randomly order integers 1-trialN_B (no replacement);
-    # 2) concatenate these two arrays into one array and then use unlist to save in one array;
+    # 1) randomly order integers 1-trialN_A; then randomly order integers 1-trialN_B (no replacement)
+    # 2) concatenate these two arrays into one array and then use unlist to save in one array
     # 3) add this array as the subclass column in dfInput_noNAOrder
     # Note: The subclass pairing assumes that dfInput_noNAOrder has already been ordered based on subject and condition! 
     dfInput_noNAOrder$subclass <-unlist(apply(subjectEmotionNTable, 1, 
@@ -419,8 +419,8 @@ pairTrials_RP <- function(dfInput_noNA, formulaInput, rpIter) {
     keepTrialPairs <- unlist(apply(subjectEmotionNTable, 1, 
                                    function(x){subjectEmotionN_min = min(x); rep(c(TRUE, FALSE), c(2*subjectEmotionN_min, sum(x) - 2*subjectEmotionN_min))}))
     
-    # Select the rows that have a trial pair and discard all rows that do not; also 
-    # select columns of interest
+    # Select the rows that have a trial pair and discard all rows that do not;  
+    # also select columns of interest
     dfInput_noNAFinal <- dfInput_noNAFinal[keepTrialPairs, c("SUBJECTID", "mSens", "age", "presentNumber", "meanAmpNC")]
     
     # Make dataframe wide
@@ -502,10 +502,10 @@ fitANOVA = function(dfInput_noNA) {
   
   # Convert categorical variables to factor before fitting model
   dfInputAvg_pairedWide$SUBJECTID <- as.factor(dfInputAvg_pairedWide$SUBJECTID)
-  # Sum code age factor 
+  # Specify effects coding for the age factor 
   dfInputAvg_pairedWide$age <- as.factor(dfInputAvg_pairedWide$age)
   contrasts(dfInputAvg_pairedWide$age) <- contr.Sum(levels(dfInputAvg_pairedWide$age)) 
-  # Sum code maternal sensitivity factor 
+  # Specify effects coding for the maternal sensitivity factor 
   dfInputAvg_pairedWide$mSens <- as.factor(dfInputAvg_pairedWide$mSens)
   contrasts(dfInputAvg_pairedWide$mSens) <- contr.Sum(levels(dfInputAvg_pairedWide$mSens)) 
   
@@ -555,10 +555,10 @@ fitLME = function(dfInput_pairedWide, formulaInput) {
   
   # Convert categorical variables to factor before fitting model
   dfInput_pairedWide$SUBJECTID <- as.factor(dfInput_pairedWide$SUBJECTID)
-  # Sum code age factor
+  # Specify effects coding for the age factor
   dfInput_pairedWide$age <- as.factor(dfInput_pairedWide$age)
   contrasts(dfInput_pairedWide$age) <- contr.Sum(levels(dfInput_pairedWide$age)) 
-  # Sum code maternal sensitivity factor
+  # Specify effects coding for the maternal sensitivity factor
   dfInput_pairedWide$mSens <- as.factor(dfInput_pairedWide$mSens)
   contrasts(dfInput_pairedWide$mSens) <- contr.Sum(levels(dfInput_pairedWide$mSens)) 
   
@@ -566,7 +566,7 @@ fitLME = function(dfInput_pairedWide, formulaInput) {
   fit.LME <- lmer(formulaInput, data = dfInput_pairedWide, REML = TRUE)
   
   tryCatch({
-    # If the model does not have problems
+    # If the model does not have problems (i.e., non-convergence or singular fit)
     if (check_convergence(fit.LME) && !check_singularity(fit.LME)) {
       # Calculate marginal means for each maternal sensitivity group
       mLME_mSens <- emmeans(fit.LME, pairwise ~ mSens, mode = "satterthwaite",
