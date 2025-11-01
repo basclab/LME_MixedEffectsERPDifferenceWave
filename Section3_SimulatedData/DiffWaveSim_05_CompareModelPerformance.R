@@ -202,7 +202,7 @@ modelProblemTable <- modelOutput_final_modPr %>%
 # (for LME Random Permutation, the percent is based on the total number of iterations*samples)
 modelProblemTable_final <- modelProblemTable %>%
   mutate(notConvergeN_pct = round(ifelse(modelMatch == "Rand P", 100*notConvergeN_sum/(sampleN*rpIter), 100*notConvergeN_sum/sampleN),3),
-         singFitN_pct = round(ifelse(modelMatch == "Rand P", 100*singFitN_sum/(sampleN*rpIter), 100*singFitN_sum/sampleN),3),
+         singFitN_pct = round(ifelse(modelMatch == "Rand P", 100*singFitN_sum/(sampleN*rpIter), 100*singFitN_sum/sampleN),1),
          allProb_pct = notConvergeN_pct + singFitN_pct)
 
 #-------------------------------------------------------------------------------
